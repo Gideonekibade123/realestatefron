@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard - Real Estate Platform</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+
+<style>
+    .listing-images {
+        display: flex;
+        overflow-x: auto;
+        gap: 6px;
+        margin-bottom: 10px;
+    }
+    .listing-images img {
+        width: 120px;
+        height: 90px;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+    .modal-gallery {
+        display: flex;
+        overflow-x: auto;
+        gap: 10px;
+    }
+    .modal-gallery img {
+        height: 250px;
+        border-radius: 6px;
+        object-fit: cover;
+    }
+    .bold-title { font-weight: bold; }
+    #imagePreviews img {
+        width: 80px;
+        height: 60px;
+        object-fit: cover;
+        margin-right: 5px;
+        margin-bottom: 5px;
+        border-radius: 4px;
+    }
+</style>
+</head>
+
+<body class="bg-light">
+
+<div class="container my-4">
+
+<!-- HEADER -->
+<div class="card mb-4">
+    <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+            <h4>Welcome, <span id="displayUsername"></span> 👋</h4>
+            <small class="text-muted">Upload or Buy Listings</small>
+        </div>
+        <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Logout</button>
+    </div>
+</div>
+
+<!-- UPLOAD FORM -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h5>Upload New Listing</h5>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="text" id="title" placeholder="Property Title" class="form-control mb-2" required>
+            <textarea id="description" placeholder="Description" class="form-control mb-2" required></textarea>
+            <input type="text" id="location" placeholder="Location" class="form-control mb-2" required>
+            <input type="number" id="price" placeholder="Price" class="form-control mb-2" required>
+            <input type="text" id="phone" placeholder="Phone" class="form-control mb-2">
+
+            <select id="category" class="form-control mb-2" required>
+                <option value="">Select Category</option>
+                <option value="sale">For Sale</option>
+                <option value="rent">For Rent</option>
+                <option value="buy">Buy</option>
+                <option value="lease">Lease</option>
+            </select>
+
+            <label>Upload Images</label>
+            <input type="file" id="images" multiple class="form-control mb-2">
+            <div id="imagePreviews"></div>
+
+            <button class="btn btn-success w-100 mt-2">Upload Listing</button>
+            <p id="uploadResponse" class="mt-2"></p>
+        </form>
+    </div>
+</div>
+
+<input type="text" id="searchBar" class="form-control mb-4" placeholder="Search listings">
+
+<div id="listingsContainer" class="row g-4"></div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal fade" id="buyModal" tabindex="-1">
+<div class="modal-dialog modal-xl modal-dialog-centered">
+<div class="modal-content">
+
+<div class="modal-header">
+    <h5 id="modalTitle" class="bold-title"></h5>
+    <button class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+
+<div class="modal-body">
+    <div id="modalGallery" class="modal-gallery mb-3"></div>
+    <p id="modalLocation"></p>
+    <p id="modalPrice"></p>
+    <p id="modalSeller"></p>
+
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5>Send Enquiry</h5>
+            <form id="listingMessageForm">
+                <textarea id="msgContent" class="form-control mb-2" required></textarea>
+                <button class="btn btn-primary w-100">Send Message</button>
+            </form>
+            <p id="listingMessageResponse" class="mt-2"></p>
+        </div>
+    </div>
+</div>
+
+<div class="modal-footer">
+    <button id="deleteListingBtn" class="btn btn-danger me-auto" style="display:none;">Delete</button>
+    <button id="buyNowBtn" class="btn btn-primary">Buy Now</button>
+    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+</div>
+
+</div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+/* ✅ PRODUCTION BACKEND */
+const API_BASE = "https://backendlastproject.onrender.com/api";
+
+let currentUser = null;
+let currentEmail = null;
+let selectedListing = null;
+let allListings = [];
+
+/* AUTH FETCH */
+async function authFetch(url, options = {}) {
+    const token = localStorage.getItem("access_token");
+    options.headers = options.headers || {};
+    if (token) options.headers.Authorization = `Bearer ${token}`;
+    return fetch(url, options);
+}
+
+/* LOAD PROFILE */
+async function loadProfile() {
+    const res = await authFetch(`${API_BASE}/auth/profile/`);
+    const data = await res.json();
+    currentUser = data.username;
+    currentEmail = data.email;
+    document.getElementById("displayUsername").textContent = currentUser;
+    loadListings();
+}
+
+/* LOAD LISTINGS */
+async function loadListings() {
+    const res = await authFetch(`${API_BASE}/listings/`);
+    allListings = await res.json();
+    displayListings(allListings);
+}
+
+/* DISPLAY LISTINGS */
+function displayListings(listings) {
+    const container = document.getElementById("listingsContainer");
+    container.innerHTML = "";
+
+    listings.forEach(l => {
+        let imgs = `<div class="listing-images">`;
+        (l.images || []).forEach(img => {
+            imgs += `<img src="https://backendlastproject.onrender.com/${img.image}">`;
+        });
+        imgs += `</div>`;
+
+        const col = document.createElement("div");
+        col.className = "col-md-4";
+        col.innerHTML = `
+            <div class="card h-100">
+                ${imgs}
+                <div class="card-body">
+                    <h5 class="bold-title">${l.title}</h5>
+                    <p>${l.location}</p>
+                    <p><strong>₦${l.price}</strong></p>
+                    <p>Seller: ${l.seller_name}</p>
+                </div>
+            </div>
+        `;
+        col.onclick = () => openBuyModal(l);
+        container.appendChild(col);
+    });
+}
+
+/* OPEN MODAL */
+function openBuyModal(l) {
+    selectedListing = l;
+    document.getElementById("modalTitle").textContent = l.title;
+    document.getElementById("modalLocation").textContent = `Location: ${l.location}`;
+    document.getElementById("modalPrice").textContent = `Price: ₦${l.price}`;
+    document.getElementById("modalSeller").textContent = `Seller: ${l.seller_name}`;
+
+    const gallery = document.getElementById("modalGallery");
+    gallery.innerHTML = "";
+    (l.images || []).forEach(img => {
+        const i = document.createElement("img");
+        i.src = `https://backendlastproject.onrender.com/${img.image}`;
+        gallery.appendChild(i);
+    });
+
+    document.getElementById("deleteListingBtn").style.display =
+        currentUser === l.seller_name ? "inline-block" : "none";
+
+    new bootstrap.Modal(document.getElementById("buyModal")).show();
+}
+
+/* SEND MESSAGE */
+document.getElementById("listingMessageForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const res = await authFetch(`${API_BASE}/enquiries/`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            listing: selectedListing.id,
+            sender_name: currentUser,
+            sender_email: currentEmail,
+            message: msgContent.value
+        })
+    });
+    listingMessageResponse.textContent = res.ok ? "Message sent ✅" : "Failed ❌";
+});
+
+/* UPLOAD */
+uploadForm.addEventListener("submit", async e => {
+    e.preventDefault();
+    const formData = new FormData(uploadForm);
+    const res = await authFetch(`${API_BASE}/listings/`, { method: "POST", body: formData });
+    uploadResponse.textContent = res.ok ? "Uploaded ✅" : "Failed ❌";
+    if (res.ok) loadListings();
+});
+
+/* LOGOUT */
+logoutBtn.onclick = () => {
+    localStorage.clear();
+    window.location.href = "login.html";
+};
+
+loadProfile();
+</script>
+
+</body>
+</html>

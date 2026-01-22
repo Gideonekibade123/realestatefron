@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Login</title>
+</head>
+<body>
+
+<h2>Login</h2>
+
+<form id="loginForm">
+    <input type="text" id="username" placeholder="Username" required><br><br>
+    <input type="password" id="password" placeholder="Password" required><br><br>
+    <button type="submit">Login</button>
+</form>
+
+<p id="message"></p>
+
+<script>
+const API_BASE = "http://127.0.0.1:8000/api";
+
+/* TOKEN KEY */
+const TOKEN_KEY = { access: "access_token", refresh: "refresh_token" };
+
+function setTokens(access, refresh) {
+    localStorage.setItem(TOKEN_KEY.access, access);
+    localStorage.setItem(TOKEN_KEY.refresh, refresh);
+}
+
+document.getElementById("loginForm").addEventListener("submit", async e => {
+    e.preventDefault();
+
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+    const message = document.getElementById("message");
+
+    try {
+        const res = await fetch(`${API_BASE}/auth/login/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            message.textContent = data.detail || JSON.stringify(data);
+            return;
+        }
+
+        // ✅ Save tokens
+        setTokens(data.access, data.refresh); // make sure your API returns access & refresh
+
+        message.textContent = "Login successful! Redirecting...";
+        // redirect only after tokens are stored
+        setTimeout(() => {
+            window.location.href = "home.html";
+        }, 500);
+
+    } catch (err) {
+        message.textContent = "Error connecting to server";
+        console.error(err);
+    }
+});
+</script>
+
+</body>
+</html>
