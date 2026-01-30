@@ -163,15 +163,15 @@ const uploadCard = document.getElementById("uploadCard");
 
 /* AUTH FETCH */
 async function authFetch(url, options = {}) {
-    const token = localStorage.getItem("access_token");
+    const token = localStorage.getItem("access"); // <-- FIXED token key
     options.headers = options.headers || {};
-    if (token) options.headers.Authorization = `Bearer ${token}`;
+    if (token) options.headers["Authorization"] = `Bearer ${token}`;
     return fetch(url, options);
 }
 
 /* UPDATE LOGIN/LOGOUT BUTTON */
 function updateAuthButton() {
-    const token = localStorage.getItem("access_token");
+    const token = localStorage.getItem("access");
     if (token && currentUser) {
         logoutBtn.style.display = "inline-block";
         loginBtn.style.display = "none";
@@ -294,12 +294,17 @@ document.getElementById("listingMessageForm").addEventListener("submit", async e
 /* UPLOAD LISTING */
 document.getElementById("uploadForm").addEventListener("submit", async e => {
     e.preventDefault();
-    const formData = new FormData(document.getElementById("uploadForm"));
+    const form = document.getElementById("uploadForm");
+    const formData = new FormData(form);
     const uploadResponse = document.getElementById("uploadResponse");
 
     const res = await authFetch(`${API_BASE}/listings/`, { method: "POST", body: formData });
     uploadResponse.textContent = res.ok ? "Uploaded ✅" : "Failed ❌";
-    if (res.ok) loadListings();
+
+    if (res.ok) {
+        form.reset();
+        loadListings();
+    }
 });
 
 /* BUTTON ACTIONS */
@@ -316,5 +321,6 @@ loadProfile();
 
 </body>
 </html>
+
 
 
