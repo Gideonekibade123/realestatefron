@@ -45,62 +45,61 @@
 
 <div class="container my-4">
 
-<!-- HEADER -->
-<div class="card mb-4">
-    <div class="card-body d-flex justify-content-between align-items-center">
-        <div>
-            <h4>Welcome, <span id="displayUsername"></span> 👋</h4>
-            <small class="text-muted">Upload or Buy Listings</small>
-        </div>
-        <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Login</button>
-    </div>
-</div>
-
-<!-- UPLOAD FORM (DROPDOWN) -->
-<div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Upload New Listing</h5>
-        <button
-            class="btn btn-sm btn-outline-primary"
-            data-bs-toggle="collapse"
-            data-bs-target="#uploadListingDropdown"
-            aria-expanded="false"
-        >
-            Toggle
-        </button>
-    </div>
-
-    <div id="uploadListingDropdown" class="collapse">
-        <div class="card-body">
-            <form id="uploadForm" enctype="multipart/form-data">
-                <input type="text" id="title" name="title" placeholder="Property Title" class="form-control mb-2" required>
-                <textarea id="description" name="description" placeholder="Description" class="form-control mb-2" required></textarea>
-                <input type="text" id="location" name="location" placeholder="Location" class="form-control mb-2" required>
-                <input type="number" id="price" name="price" placeholder="Price" class="form-control mb-2" required>
-                <input type="text" id="phone" name="phone" placeholder="Phone" class="form-control mb-2">
-
-                <select id="category" name="category" class="form-control mb-2" required>
-                    <option value="">Select Category</option>
-                    <option value="sale">For Sale</option>
-                    <option value="rent">For Rent</option>
-                    <option value="buy">Buy</option>
-                    <option value="lease">Lease</option>
-                </select>
-
-                <label>Upload Images</label>
-                <input type="file" id="images" name="images" multiple class="form-control mb-2">
-                <div id="imagePreviews"></div>
-
-                <button class="btn btn-success w-100 mt-2">Upload Listing</button>
-                <p id="uploadResponse" class="mt-2"></p>
-            </form>
+    <!-- HEADER -->
+    <div class="card mb-4">
+        <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+                <h4>Welcome, <span id="displayUsername"></span> 👋</h4>
+                <small class="text-muted">Upload or Buy Listings</small>
+            </div>
+            <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Login</button>
         </div>
     </div>
-</div>
 
-<input type="text" id="searchBar" class="form-control mb-4" placeholder="Search listings">
+    <!-- UPLOAD FORM (DROPDOWN) -->
+    <div class="card mb-4" id="uploadCard">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Upload New Listing</h5>
+            <button
+                class="btn btn-sm btn-outline-primary"
+                data-bs-toggle="collapse"
+                data-bs-target="#uploadListingDropdown"
+                aria-expanded="false"
+            >
+                Toggle
+            </button>
+        </div>
 
-<div id="listingsContainer" class="row g-4"></div>
+        <div id="uploadListingDropdown" class="collapse">
+            <div class="card-body">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <input type="text" id="title" name="title" placeholder="Property Title" class="form-control mb-2" required>
+                    <textarea id="description" name="description" placeholder="Description" class="form-control mb-2" required></textarea>
+                    <input type="text" id="location" name="location" placeholder="Location" class="form-control mb-2" required>
+                    <input type="number" id="price" name="price" placeholder="Price" class="form-control mb-2" required>
+                    <input type="text" id="phone" name="phone" placeholder="Phone" class="form-control mb-2">
+
+                    <select id="category" name="category" class="form-control mb-2" required>
+                        <option value="">Select Category</option>
+                        <option value="sale">For Sale</option>
+                        <option value="rent">For Rent</option>
+                        <option value="buy">Buy</option>
+                        <option value="lease">Lease</option>
+                    </select>
+
+                    <label>Upload Images</label>
+                    <input type="file" id="images" name="images" multiple class="form-control mb-2">
+                    <div id="imagePreviews"></div>
+
+                    <button class="btn btn-success w-100 mt-2">Upload Listing</button>
+                    <p id="uploadResponse" class="mt-2"></p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <input type="text" id="searchBar" class="form-control mb-4" placeholder="Search listings">
+    <div id="listingsContainer" class="row g-4"></div>
 
 </div>
 
@@ -161,13 +160,47 @@ async function authFetch(url, options = {}) {
     return fetch(url, options);
 }
 
+/* ELEMENTS */
+const logoutBtn = document.getElementById("logoutBtn");
+const uploadCard = document.getElementById("uploadCard");
+
+/* UPDATE LOGIN/LOGOUT BUTTON */
+function updateAuthButton() {
+    const token = localStorage.getItem("access_token");
+    if (token && currentUser) {
+        logoutBtn.textContent = "Logout";
+        logoutBtn.classList.remove("btn-outline-success");
+        logoutBtn.classList.add("btn-outline-danger");
+        uploadCard.style.display = "block"; // show upload if logged in
+    } else {
+        logoutBtn.textContent = "Login";
+        logoutBtn.classList.remove("btn-outline-danger");
+        logoutBtn.classList.add("btn-outline-success");
+        uploadCard.style.display = "none"; // hide upload if not logged in
+    }
+}
+
 /* LOAD PROFILE */
 async function loadProfile() {
-    const res = await authFetch(`${API_BASE}/auth/profile/`);
-    const data = await res.json();
-    currentUser = data.username;
-    currentEmail = data.email;
-    document.getElementById("displayUsername").textContent = currentUser;
+    try {
+        const res = await authFetch(`${API_BASE}/auth/profile/`);
+        if (res.ok) {
+            const data = await res.json();
+            currentUser = data.username;
+            currentEmail = data.email;
+            document.getElementById("displayUsername").textContent = currentUser;
+        } else {
+            currentUser = null;
+            currentEmail = null;
+            document.getElementById("displayUsername").textContent = "Guest";
+        }
+    } catch (err) {
+        currentUser = null;
+        currentEmail = null;
+        document.getElementById("displayUsername").textContent = "Guest";
+    }
+
+    updateAuthButton();
     loadListings();
 }
 
@@ -255,14 +288,23 @@ uploadForm.addEventListener("submit", async e => {
     if (res.ok) loadListings();
 });
 
-/* LOGOUT */
+/* LOGIN / LOGOUT BUTTON */
 logoutBtn.onclick = () => {
-    localStorage.clear();
-    window.location.href = "login.html";
+    const token = localStorage.getItem("access_token");
+    if (token) {
+        // Logout
+        localStorage.clear();
+        window.location.href = "login.html";
+    } else {
+        // Not logged in → go to login page
+        window.location.href = "login.html";
+    }
 };
 
+/* INIT */
 loadProfile();
 </script>
 
 </body>
 </html>
+
