@@ -56,32 +56,45 @@
     </div>
 </div>
 
-<!-- UPLOAD FORM -->
+<!-- UPLOAD FORM (DROPDOWN) -->
 <div class="card mb-4">
-    <div class="card-body">
-        <h5>Upload New Listing</h5>
-        <form id="uploadForm" enctype="multipart/form-data">
-            <input type="text" id="title" placeholder="Property Title" class="form-control mb-2" required>
-            <textarea id="description" placeholder="Description" class="form-control mb-2" required></textarea>
-            <input type="text" id="location" placeholder="Location" class="form-control mb-2" required>
-            <input type="number" id="price" placeholder="Price" class="form-control mb-2" required>
-            <input type="text" id="phone" placeholder="Phone" class="form-control mb-2">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Upload New Listing</h5>
+        <button
+            class="btn btn-sm btn-outline-primary"
+            data-bs-toggle="collapse"
+            data-bs-target="#uploadListingDropdown"
+            aria-expanded="false"
+        >
+            Toggle
+        </button>
+    </div>
 
-            <select id="category" class="form-control mb-2" required>
-                <option value="">Select Category</option>
-                <option value="sale">For Sale</option>
-                <option value="rent">For Rent</option>
-                <option value="buy">Buy</option>
-                <option value="lease">Lease</option>
-            </select>
+    <div id="uploadListingDropdown" class="collapse">
+        <div class="card-body">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <input type="text" id="title" name="title" placeholder="Property Title" class="form-control mb-2" required>
+                <textarea id="description" name="description" placeholder="Description" class="form-control mb-2" required></textarea>
+                <input type="text" id="location" name="location" placeholder="Location" class="form-control mb-2" required>
+                <input type="number" id="price" name="price" placeholder="Price" class="form-control mb-2" required>
+                <input type="text" id="phone" name="phone" placeholder="Phone" class="form-control mb-2">
 
-            <label>Upload Images</label>
-            <input type="file" id="images" multiple class="form-control mb-2">
-            <div id="imagePreviews"></div>
+                <select id="category" name="category" class="form-control mb-2" required>
+                    <option value="">Select Category</option>
+                    <option value="sale">For Sale</option>
+                    <option value="rent">For Rent</option>
+                    <option value="buy">Buy</option>
+                    <option value="lease">Lease</option>
+                </select>
 
-            <button class="btn btn-success w-100 mt-2">Upload Listing</button>
-            <p id="uploadResponse" class="mt-2"></p>
-        </form>
+                <label>Upload Images</label>
+                <input type="file" id="images" name="images" multiple class="form-control mb-2">
+                <div id="imagePreviews"></div>
+
+                <button class="btn btn-success w-100 mt-2">Upload Listing</button>
+                <p id="uploadResponse" class="mt-2"></p>
+            </form>
+        </div>
     </div>
 </div>
 

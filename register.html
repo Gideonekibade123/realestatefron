@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html>
 <head>
     <title>Register</title>
@@ -17,7 +17,7 @@
 <p id="message"></p>
 
 <script>
-const API_BASE = "http://127.0.0.1:8000/api/auth";
+const API_BASE = "https://backendlastproject.onrender.com/api/auth";
 const TOKEN_KEY = { access: "access_token", refresh: "refresh_token" };
 
 function setTokens(access, refresh) {
@@ -65,4 +65,92 @@ document.getElementById("registerForm").addEventListener("submit", async e => {
 </script>
 </body>
 </html>
+ -->
+
+
+ 
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+</head>
+<body>
+
+<h2>Create Account</h2>
+
+<form id="registerForm">
+    <input type="text" id="username" placeholder="Username" required><br><br>
+    <input type="email" id="email" placeholder="Email" required><br><br>
+    <input type="password" id="password" placeholder="Password" required><br><br>
+    <input type="password" id="passwordConfirm" placeholder="Confirm Password" required><br><br>
+    <button type="submit">Register</button>
+</form>
+
+<p id="message"></p>
+
+<script>
+const API_BASE = "https://backendlastproject.onrender.com/api/auth";
+const TOKEN_KEY = { access: "access_token", refresh: "refresh_token" };
+
+// Save tokens to localStorage
+function setTokens(access, refresh) {
+    localStorage.setItem(TOKEN_KEY.access, access);
+    localStorage.setItem(TOKEN_KEY.refresh, refresh);
+}
+
+// Clear tokens
+function clearTokens() {
+    localStorage.removeItem(TOKEN_KEY.access);
+    localStorage.removeItem(TOKEN_KEY.refresh);
+}
+
+document.getElementById("registerForm").addEventListener("submit", async e => {
+    e.preventDefault();
+
+    const username = document.getElementById("username").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const passwordConfirm = document.getElementById("passwordConfirm").value;
+    const message = document.getElementById("message");
+
+    // Simple password confirmation check
+    if (password !== passwordConfirm) {
+        message.textContent = "Passwords do not match ❌";
+        return;
+    }
+
+    message.textContent = "Registering... ⏳";
+
+    try {
+        const res = await fetch(`${API_BASE}/register/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, email, password })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            // ✅ Save JWT tokens if backend returns them
+            if (data.access && data.refresh) setTokens(data.access, data.refresh);
+
+            message.textContent = "Registration successful ✅ Redirecting...";
+            setTimeout(() => window.location.href = "home.html", 1000);
+        } else {
+            // Show backend error messages clearly
+            message.textContent = data.detail || JSON.stringify(data);
+        }
+
+    } catch (err) {
+        message.textContent = "Error connecting to server ❌";
+        console.error(err);
+    }
+});
+</script>
+
+</body>
+</html>
+
 
