@@ -50,7 +50,7 @@ document.getElementById("registerForm").addEventListener("submit", async e => {
             
             // Redirect to home page
             setTimeout(() => {
-                window.location.href = "home.html";
+                window.location.href = "index.html";
             }, 1000);
 
         } else {
@@ -64,11 +64,11 @@ document.getElementById("registerForm").addEventListener("submit", async e => {
 });
 </script>
 </body>
-</html>
- -->
+</html> -->
 
 
- 
+
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -137,7 +137,7 @@ document.getElementById("registerForm").addEventListener("submit", async e => {
             if (data.access && data.refresh) setTokens(data.access, data.refresh);
 
             message.textContent = "Registration successful ✅ Redirecting...";
-            setTimeout(() => window.location.href = "home.html", 1000);
+            setTimeout(() => window.location.href = "index.html", 1000);
         } else {
             // Show backend error messages clearly
             message.textContent = data.detail || JSON.stringify(data);
@@ -152,5 +152,3 @@ document.getElementById("registerForm").addEventListener("submit", async e => {
 
 </body>
 </html>
-
-
