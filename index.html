@@ -269,7 +269,7 @@ document.getElementById("buyNowBtn").addEventListener("click", async () => {
         return;
     }
     try {
-        const res = await authFetch(`${API_BASE}/payments/initiate/`, {
+        const res = await authFetch(`${API_BASE}/payments/init/`, {
             method: "POST",
             headers: {"Content-Type":"application/json"},
             body: JSON.stringify({ listing: selectedListing.id })
