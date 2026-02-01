@@ -60,16 +60,11 @@
         </div>
     </div>
 
-    <!-- UPLOAD FORM (DROPDOWN) -->
-    <div class="card mb-4" id="uploadCard">
+    <!-- UPLOAD FORM -->
+    <div class="card mb-4" id="uploadCard" style="display:none;">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Upload New Listing</h5>
-            <button
-                class="btn btn-sm btn-outline-primary"
-                data-bs-toggle="collapse"
-                data-bs-target="#uploadListingDropdown"
-                aria-expanded="false"
-            >
+            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#uploadListingDropdown">
                 Toggle
             </button>
         </div>
@@ -77,13 +72,13 @@
         <div id="uploadListingDropdown" class="collapse">
             <div class="card-body">
                 <form id="uploadForm" enctype="multipart/form-data">
-                    <input type="text" id="title" name="title" placeholder="Property Title" class="form-control mb-2" required>
-                    <textarea id="description" name="description" placeholder="Description" class="form-control mb-2" required></textarea>
-                    <input type="text" id="location" name="location" placeholder="Location" class="form-control mb-2" required>
-                    <input type="number" id="price" name="price" placeholder="Price" class="form-control mb-2" required>
-                    <input type="text" id="phone" name="phone" placeholder="Phone" class="form-control mb-2">
+                    <input type="text" name="title" class="form-control mb-2" placeholder="Property Title" required>
+                    <textarea name="description" class="form-control mb-2" placeholder="Description" required></textarea>
+                    <input type="text" name="location" class="form-control mb-2" placeholder="Location" required>
+                    <input type="number" name="price" class="form-control mb-2" placeholder="Price" required>
+                    <input type="text" name="phone" class="form-control mb-2" placeholder="Phone">
 
-                    <select id="category" name="category" class="form-control mb-2" required>
+                    <select name="category" class="form-control mb-2" required>
                         <option value="">Select Category</option>
                         <option value="sale">For Sale</option>
                         <option value="rent">For Rent</option>
@@ -91,20 +86,15 @@
                         <option value="lease">Lease</option>
                     </select>
 
-                    <label>Upload Images</label>
-                    <input type="file" id="images" name="images" multiple class="form-control mb-2">
-                    <div id="imagePreviews"></div>
-
-                    <button class="btn btn-success w-100 mt-2">Upload Listing</button>
+                    <input type="file" name="images" multiple class="form-control mb-2">
+                    <button class="btn btn-success w-100">Upload Listing</button>
                     <p id="uploadResponse" class="mt-2"></p>
                 </form>
             </div>
         </div>
     </div>
 
-    <input type="text" id="searchBar" class="form-control mb-4" placeholder="Search listings">
     <div id="listingsContainer" class="row g-4"></div>
-
 </div>
 
 <!-- MODAL -->
@@ -136,7 +126,6 @@
 </div>
 
 <div class="modal-footer">
-    <button id="deleteListingBtn" class="btn btn-danger me-auto" style="display:none;">Delete</button>
     <button id="buyNowBtn" class="btn btn-primary">Buy Now</button>
     <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
 </div>
@@ -153,174 +142,128 @@ const API_BASE = "https://backendlastproject.onrender.com/api";
 let currentUser = null;
 let currentEmail = null;
 let selectedListing = null;
-let allListings = [];
-
-/* ELEMENTS */
-const loginBtn = document.getElementById("loginBtn");
-const registerBtn = document.getElementById("registerBtn");
-const logoutBtn = document.getElementById("logoutBtn");
-const uploadCard = document.getElementById("uploadCard");
 
 /* AUTH FETCH */
 async function authFetch(url, options = {}) {
-    const token = localStorage.getItem("access"); // <-- FIXED token key
+    const token = localStorage.getItem("access_token");
     options.headers = options.headers || {};
     if (token) options.headers["Authorization"] = `Bearer ${token}`;
     return fetch(url, options);
-}
-
-/* UPDATE LOGIN/LOGOUT BUTTON */
-function updateAuthButton() {
-    const token = localStorage.getItem("access");
-    if (token && currentUser) {
-        logoutBtn.style.display = "inline-block";
-        loginBtn.style.display = "none";
-        registerBtn.style.display = "none";
-        uploadCard.style.display = "block";
-    } else {
-        logoutBtn.style.display = "none";
-        loginBtn.style.display = "inline-block";
-        registerBtn.style.display = "inline-block";
-        uploadCard.style.display = "none";
-    }
 }
 
 /* LOAD PROFILE */
 async function loadProfile() {
     try {
         const res = await authFetch(`${API_BASE}/auth/profile/`);
-        if (res.ok) {
-            const data = await res.json();
-            currentUser = data.username;
-            currentEmail = data.email;
-            document.getElementById("displayUsername").textContent = currentUser;
-        } else {
-            currentUser = null;
-            currentEmail = null;
-            document.getElementById("displayUsername").textContent = "Guest";
-        }
-    } catch (err) {
+        if (!res.ok) throw "unauth";
+
+        const data = await res.json();
+        currentUser = data.username;
+        currentEmail = data.email;
+
+        document.getElementById("displayUsername").textContent = currentUser;
+        document.getElementById("uploadCard").style.display = "block";
+        document.getElementById("loginBtn").style.display = "none";
+        document.getElementById("registerBtn").style.display = "none";
+        document.getElementById("logoutBtn").style.display = "inline-block";
+    } catch {
         currentUser = null;
         currentEmail = null;
-        document.getElementById("displayUsername").textContent = "Guest";
     }
-    updateAuthButton();
     loadListings();
 }
 
 /* LOAD LISTINGS */
 async function loadListings() {
-    const res = await authFetch(`${API_BASE}/listings/`);
-    allListings = await res.json();
-    displayListings(allListings);
-}
-
-/* DISPLAY LISTINGS */
-function displayListings(listings) {
+    const res = await fetch(`${API_BASE}/listings/`);
+    const listings = await res.json();
     const container = document.getElementById("listingsContainer");
     container.innerHTML = "";
 
     listings.forEach(l => {
-        let imgs = `<div class="listing-images">`;
-        (l.images || []).forEach(img => {
-            imgs += `<img src="https://backendlastproject.onrender.com/${img.image}">`;
-        });
-        imgs += `</div>`;
-
         const col = document.createElement("div");
         col.className = "col-md-4";
         col.innerHTML = `
             <div class="card h-100">
-                ${imgs}
+                <img src="https://backendlastproject.onrender.com/${l.images?.[0]?.image || ''}" class="card-img-top">
                 <div class="card-body">
-                    <h5 class="bold-title">${l.title}</h5>
+                    <h5>${l.title}</h5>
                     <p>${l.location}</p>
-                    <p><strong>₦${l.price}</strong></p>
-                    <p>Seller: ${l.seller_name}</p>
+                    <strong>₦${l.price}</strong>
                 </div>
             </div>
         `;
-        col.onclick = () => openBuyModal(l);
+        col.onclick = () => openModal(l);
         container.appendChild(col);
     });
 }
 
 /* OPEN MODAL */
-function openBuyModal(l) {
+function openModal(l) {
     selectedListing = l;
     document.getElementById("modalTitle").textContent = l.title;
-    document.getElementById("modalLocation").textContent = `Location: ${l.location}`;
-    document.getElementById("modalPrice").textContent = `Price: ₦${l.price}`;
-    document.getElementById("modalSeller").textContent = `Seller: ${l.seller_name}`;
+    document.getElementById("modalLocation").textContent = l.location;
+    document.getElementById("modalPrice").textContent = `₦${l.price}`;
+    document.getElementById("modalSeller").textContent = l.seller_name;
 
     const gallery = document.getElementById("modalGallery");
     gallery.innerHTML = "";
-    (l.images || []).forEach(img => {
+    l.images.forEach(img => {
         const i = document.createElement("img");
         i.src = `https://backendlastproject.onrender.com/${img.image}`;
         gallery.appendChild(i);
     });
 
-    document.getElementById("deleteListingBtn").style.display =
-        currentUser === l.seller_name ? "inline-block" : "none";
-
     new bootstrap.Modal(document.getElementById("buyModal")).show();
 }
 
-/* SEND MESSAGE */
+/* SEND ENQUIRY */
 document.getElementById("listingMessageForm").addEventListener("submit", async e => {
     e.preventDefault();
-    const msgContent = document.getElementById("msgContent");
-    const listingMessageResponse = document.getElementById("listingMessageResponse");
-
     if (!currentUser) {
-        listingMessageResponse.textContent = "Please login first ❌";
+        document.getElementById("listingMessageResponse").textContent = "Please login first ❌";
         return;
     }
 
     const res = await authFetch(`${API_BASE}/enquiries/`, {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
+        headers: {"Content-Type":"application/json"},
         body: JSON.stringify({
             listing: selectedListing.id,
-            sender_name: currentUser,
-            sender_email: currentEmail,
             message: msgContent.value
         })
     });
-    listingMessageResponse.textContent = res.ok ? "Message sent ✅" : "Failed ❌";
+
+    document.getElementById("listingMessageResponse").textContent =
+        res.ok ? "Message sent ✅" : "Failed ❌";
 });
 
-/* UPLOAD LISTING */
+/* UPLOAD */
 document.getElementById("uploadForm").addEventListener("submit", async e => {
     e.preventDefault();
-    const form = document.getElementById("uploadForm");
-    const formData = new FormData(form);
-    const uploadResponse = document.getElementById("uploadResponse");
-
-    const res = await authFetch(`${API_BASE}/listings/`, { method: "POST", body: formData });
-    uploadResponse.textContent = res.ok ? "Uploaded ✅" : "Failed ❌";
-
-    if (res.ok) {
-        form.reset();
-        loadListings();
-    }
+    const res = await authFetch(`${API_BASE}/listings/`, {
+        method: "POST",
+        body: new FormData(e.target)
+    });
+    document.getElementById("uploadResponse").textContent =
+        res.ok ? "Uploaded ✅" : "Upload failed ❌";
+    if (res.ok) loadListings();
 });
 
-/* BUTTON ACTIONS */
-loginBtn.onclick = () => window.location.href = "login.html";
-registerBtn.onclick = () => window.location.href = "register.html";
+/* BUTTONS */
+loginBtn.onclick = () => location.href = "login.html";
+registerBtn.onclick = () => location.href = "register.html";
 logoutBtn.onclick = () => {
     localStorage.clear();
-    window.location.href = "login.html";
+    location.href = "login.html";
 };
 
-/* INIT */
 loadProfile();
 </script>
 
 </body>
 </html>
+
 
 
 
