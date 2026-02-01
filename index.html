@@ -227,15 +227,20 @@ document.getElementById("listingMessageForm").addEventListener("submit", async e
     try {
         const res = await authFetch(`${API_BASE}/enquiries/`, {
             method: "POST",
-            headers: {"Content-Type":"application/json"},
             body: JSON.stringify({
                 listing: selectedListing.id,
                 message: msgContent.value
             })
         });
-        document.getElementById("listingMessageResponse").textContent =
-            res.ok ? "Message sent ✅" : "Failed ❌";
-        if (res.ok) msgContent.value = "";
+
+        if (res.ok) {
+            document.getElementById("listingMessageResponse").textContent = "Message sent ✅";
+            msgContent.value = "";
+        } else {
+            const text = await res.text();
+            console.error("Enquiry failed:", text);
+            document.getElementById("listingMessageResponse").textContent = "Failed ❌";
+        }
     } catch (err) {
         document.getElementById("listingMessageResponse").textContent = "Failed ❌";
         console.error(err);
@@ -269,14 +274,20 @@ document.getElementById("buyNowBtn").addEventListener("click", async () => {
         return;
     }
     try {
-        const res = await authFetch(`${API_BASE}/payments/init/`, {
+        const res = await authFetch(`${API_BASE}/payments/paystack/init/`, {
             method: "POST",
-            headers: {"Content-Type":"application/json"},
             body: JSON.stringify({ listing: selectedListing.id })
         });
+
+        if (!res.ok) {
+            const text = await res.text();
+            console.error("Payment failed:", text);
+            alert("Payment initiation failed ❌");
+            return;
+        }
+
         const data = await res.json();
-        if (res.ok && data.authorization_url) {
-            // Redirect to payment gateway
+        if (data.authorization_url) {
             window.location.href = data.authorization_url;
         } else {
             alert("Payment initiation failed ❌");
