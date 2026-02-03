@@ -6,37 +6,11 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
 
 <style>
-.listing-images {
-    display: flex;
-    overflow-x: auto;
-    gap: 6px;
-    margin-bottom: 10px;
-}
-.listing-images img {
-    width: 120px;
-    height: 90px;
-    object-fit: cover;
-    border-radius: 5px;
-}
-.modal-gallery {
-    display: flex;
-    overflow-x: auto;
-    gap: 10px;
-}
-.modal-gallery img {
-    height: 250px;
-    border-radius: 6px;
-    object-fit: cover;
-}
-.bold-title { font-weight: bold; }
-#imagePreviews img {
-    width: 80px;
-    height: 60px;
-    object-fit: cover;
-    margin-right: 5px;
-    margin-bottom: 5px;
-    border-radius: 4px;
-}
+.listing-images { display:flex; overflow-x:auto; gap:6px; margin-bottom:10px; }
+.listing-images img { width:120px; height:90px; object-fit:cover; border-radius:5px; }
+.modal-gallery { display:flex; overflow-x:auto; gap:10px; }
+.modal-gallery img { height:250px; border-radius:6px; object-fit:cover; }
+.bold-title { font-weight:bold; }
 </style>
 </head>
 
@@ -58,34 +32,28 @@
 </div>
 </div>
 
-<!-- UPLOAD FORM -->
+<!-- UPLOAD -->
 <div class="card mb-4" id="uploadCard" style="display:none;">
 <div class="card-header d-flex justify-content-between align-items-center">
 <h5 class="mb-0">Upload New Listing</h5>
-<button class="btn btn-sm btn-outline-primary"
-        data-bs-toggle="collapse"
-        data-bs-target="#uploadListingDropdown">
-Toggle
-</button>
+<button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#uploadListingDropdown">Toggle</button>
 </div>
 
 <div id="uploadListingDropdown" class="collapse">
 <div class="card-body">
 <form id="uploadForm" enctype="multipart/form-data">
-<input type="text" name="title" class="form-control mb-2" placeholder="Property Title" required>
-<textarea name="description" class="form-control mb-2" placeholder="Description" required></textarea>
-<input type="text" name="location" class="form-control mb-2" placeholder="Location" required>
-<input type="number" name="price" class="form-control mb-2" placeholder="Price" required>
-<input type="text" name="phone" class="form-control mb-2" placeholder="Phone">
+<input name="title" class="form-control mb-2" required>
+<textarea name="description" class="form-control mb-2" required></textarea>
+<input name="location" class="form-control mb-2" required>
+<input name="price" type="number" class="form-control mb-2" required>
+<input name="phone" class="form-control mb-2">
 <select name="category" class="form-control mb-2" required>
-<option value="">Select Category</option>
-<option value="sale">For Sale</option>
-<option value="rent">For Rent</option>
-<option value="buy">Buy</option>
-<option value="lease">Lease</option>
+<option value="">Category</option>
+<option value="sale">Sale</option>
+<option value="rent">Rent</option>
 </select>
 <input type="file" name="images" multiple class="form-control mb-2">
-<button class="btn btn-success w-100">Upload Listing</button>
+<button class="btn btn-success w-100">Upload</button>
 <p id="uploadResponse" class="mt-2"></p>
 </form>
 </div>
@@ -97,12 +65,12 @@ Toggle
 </div>
 
 <!-- MODAL -->
-<div class="modal fade" id="buyModal" tabindex="-1">
+<div class="modal fade" id="buyModal">
 <div class="modal-dialog modal-xl modal-dialog-centered">
 <div class="modal-content">
 
 <div class="modal-header">
-<h5 id="modalTitle" class="bold-title"></h5>
+<h5 id="modalTitle"></h5>
 <button class="btn-close" data-bs-dismiss="modal"></button>
 </div>
 
@@ -136,131 +104,141 @@ Toggle
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-const API_BASE = "https://backendlastproject.onrender.com/api";
-let currentUser=null, currentEmail=null, selectedListing=null;
+const API_BASE="https://backendlastproject.onrender.com/api";
+let currentUser=null,currentEmail=null,selectedListing=null;
 
-/* SAFE AUTH FETCH */
-async function authFetch(url, options = {}) {
-    const token = localStorage.getItem("access_token");
-    options.headers = options.headers || {};
-    if (!(options.body instanceof FormData)) {
-        options.headers["Content-Type"] = "application/json";
+/* AUTH FETCH */
+async function authFetch(url, options={}) {
+    const token=localStorage.getItem("access_token");
+    options.headers=options.headers||{};
+    if(!(options.body instanceof FormData)){
+        options.headers["Content-Type"]="application/json";
     }
-    if (token) {
-        options.headers["Authorization"] = `Bearer ${token}`;
-    }
-    return fetch(url, options);
+    if(token) options.headers["Authorization"]=`Bearer ${token}`;
+    return fetch(url,options);
 }
 
-/* LOAD PROFILE */
-async function loadProfile() {
-    try {
-        const res = await authFetch(`${API_BASE}/auth/profile/`);
-        if (!res.ok) throw "";
-        const data = await res.json();
-        currentUser = data.username;
-        currentEmail = data.email;
-        displayUsername.textContent = currentUser;
-        uploadCard.style.display = "block";
-        loginBtn.style.display = registerBtn.style.display = "none";
-        logoutBtn.style.display = "inline-block";
-    } catch {}
+/* PROFILE */
+async function loadProfile(){
+    try{
+        const res=await authFetch(`${API_BASE}/auth/profile/`);
+        if(!res.ok) throw "";
+        const d=await res.json();
+        currentUser=d.username;
+        currentEmail=d.email;
+        displayUsername.textContent=currentUser;
+        uploadCard.style.display="block";
+        loginBtn.style.display=registerBtn.style.display="none";
+        logoutBtn.style.display="inline-block";
+    }catch{}
     loadListings();
 }
 
-/* LOAD LISTINGS */
-async function loadListings() {
-    const res = await fetch(`${API_BASE}/listings/`);
-    const listings = await res.json();
-    listingsContainer.innerHTML = "";
-    listings.forEach(l => {
-        const col = document.createElement("div");
-        col.className = "col-md-4";
-        col.innerHTML = `
+/* LISTINGS */
+async function loadListings(){
+    const res=await fetch(`${API_BASE}/listings/`);
+    const listings=await res.json();
+    listingsContainer.innerHTML="";
+    listings.forEach(l=>{
+        const c=document.createElement("div");
+        c.className="col-md-4";
+        c.innerHTML=`
         <div class="card h-100">
-            <img src="https://backendlastproject.onrender.com/${l.images?.[0]?.image || ""}" class="card-img-top">
-            <div class="card-body">
-                <h5>${l.title}</h5>
-                <p>${l.location}</p>
-                <strong>₦${l.price}</strong>
-            </div>
-        </div>`;
-        col.onclick = () => openModal(l);
-        listingsContainer.appendChild(col);
+        <img src="https://backendlastproject.onrender.com/${l.images?.[0]?.image||""}" class="card-img-top">
+        <div class="card-body">
+        <h5>${l.title}</h5>
+        <p>${l.location}</p>
+        <strong>₦${l.price}</strong>
+        </div></div>`;
+        c.onclick=()=>openModal(l);
+        listingsContainer.appendChild(c);
     });
 }
 
-/* OPEN MODAL */
-function openModal(l) {
-    selectedListing = l;
-    modalTitle.textContent = l.title;
-    modalLocation.textContent = l.location;
-    modalPrice.textContent = `₦${l.price}`;
-    modalSeller.textContent = l.seller_name;
-    modalGallery.innerHTML = "";
-    l.images.forEach(img => {
-        const i = document.createElement("img");
-        i.src = `https://backendlastproject.onrender.com/${img.image}`;
+/* MODAL */
+function openModal(l){
+    selectedListing=l;
+    modalTitle.textContent=l.title;
+    modalLocation.textContent=l.location;
+    modalPrice.textContent=`₦${l.price}`;
+    modalSeller.textContent=l.seller_name||"";
+    modalGallery.innerHTML="";
+    (l.images||[]).forEach(img=>{
+        const i=document.createElement("img");
+        i.src=`https://backendlastproject.onrender.com/${img.image}`;
         modalGallery.appendChild(i);
     });
     new bootstrap.Modal(buyModal).show();
 }
 
-/* SEND ENQUIRY */
-listingMessageForm.addEventListener("submit", async e => {
+/* ENQUIRY */
+listingMessageForm.onsubmit=async e=>{
     e.preventDefault();
-    if (!currentUser) return alert("Please login first");
-    const res = await authFetch(`${API_BASE}/enquiries/`, {
-        method: "POST",
-        body: JSON.stringify({
-            listing: selectedListing.id,
-            message: msgContent.value
+    if(!currentUser) return alert("Please login");
+    if(!selectedListing) return alert("No listing selected");
+    if(!msgContent.value.trim()) return alert("Message required");
+
+    const res=await authFetch(`${API_BASE}/enquiries/`,{
+        method:"POST",
+        body:JSON.stringify({
+            listing:selectedListing.id,
+            message:msgContent.value.trim()
         })
     });
-    listingMessageResponse.textContent = res.ok ? "Message sent ✅" : "Failed ❌";
-    if (res.ok) msgContent.value = "";
-});
+
+    if(res.ok){
+        listingMessageResponse.textContent="Message sent ✅";
+        msgContent.value="";
+    }else{
+        console.error(await res.text());
+        alert("Message failed ❌");
+    }
+};
+
+/* PAYSTACK */
+buyNowBtn.onclick=async()=>{
+    if(!currentUser) return alert("Login first");
+    if(!selectedListing) return alert("No listing selected");
+
+    const res=await authFetch(`${API_BASE}/payments/paystack/init/`,{
+        method:"POST",
+        body:JSON.stringify({
+            email:currentEmail,
+            amount:selectedListing.price * 100
+        })
+    });
+
+    let data;
+    try{ data=await res.json(); }
+    catch{
+        console.error(await res.text());
+        alert("Payment server error ❌");
+        return;
+    }
+
+    if(data.authorization_url){
+        window.location.href=data.authorization_url;
+    }else{
+        console.error(data);
+        alert("Payment initiation failed ❌");
+    }
+};
 
 /* UPLOAD */
-uploadForm.addEventListener("submit", async e => {
+uploadForm.onsubmit=async e=>{
     e.preventDefault();
-    const res = await authFetch(`${API_BASE}/listings/`, {
-        method: "POST",
-        body: new FormData(e.target)
+    const res=await authFetch(`${API_BASE}/listings/`,{
+        method:"POST",
+        body:new FormData(e.target)
     });
-    uploadResponse.textContent = res.ok ? "Uploaded ✅" : "Upload failed ❌";
-    if (res.ok) {
-        e.target.reset();
-        loadListings();
-    }
-});
-
-/* BUY NOW */
-buyNowBtn.addEventListener("click", async () => {
-    if (!currentUser) return alert("Please login first!");
-    const res = await authFetch(`${API_BASE}/payments/paystack/init/`, {
-        method: "POST",
-        body: JSON.stringify({
-            email: currentEmail,
-            amount: selectedListing.price
-        })
-    });
-    const data = await res.json();
-    if (data.authorization_url) {
-        window.location.href = data.authorization_url;
-    } else {
-        alert("Payment initiation failed ❌");
-        console.error(data);
-    }
-});
+    uploadResponse.textContent=res.ok?"Uploaded ✅":"Upload failed ❌";
+    if(res.ok){e.target.reset();loadListings();}
+};
 
 /* BUTTONS */
-loginBtn.onclick = () => location.href = "login.html";
-registerBtn.onclick = () => location.href = "register.html";
-logoutBtn.onclick = () => {
-    localStorage.clear();
-    location.href = "login.html";
-};
+loginBtn.onclick=()=>location.href="login.html";
+registerBtn.onclick=()=>location.href="register.html";
+logoutBtn.onclick=()=>{localStorage.clear();location.href="login.html";};
 
 loadProfile();
 </script>
