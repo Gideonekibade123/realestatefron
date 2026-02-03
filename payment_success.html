@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -61,3 +61,78 @@ paymentForm.addEventListener("submit", async (e) => {
 
 </body>
 </html>
+
+
+
+
+ -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pay for Property</title>
+</head>
+<body>
+
+<h2>Pay for Property</h2>
+
+<form id="paymentForm">
+    <input type="number" id="amount" placeholder="Amount (₦)" required><br><br>
+    <button type="submit">Pay Now</button>
+</form>
+
+<p id="message"></p>
+
+<script>
+const PAYMENT_INIT_URL = "https://backendlastproject.onrender.com/api/payments/paystack/init/";
+const paymentForm = document.getElementById("paymentForm");
+const amountInput = document.getElementById("amount");
+const message = document.getElementById("message");
+
+paymentForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const token = localStorage.getItem("access_token"); // ⚡ use correct key
+    if (!token) {
+        message.textContent = "You must be logged in to make a payment";
+        return;
+    }
+
+    const amount = amountInput.value * 100; // Paystack expects amount in kobo
+    message.textContent = "Initializing payment...";
+
+    try {
+        const res = await fetch(PAYMENT_INIT_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}` // ⚡ fix header
+            },
+            body: JSON.stringify({ amount })
+        });
+
+        let data;
+        try { data = await res.json(); }
+        catch {
+            console.error(await res.text());
+            message.textContent = "Server error";
+            return;
+        }
+
+        if (data.authorization_url) { // ⚡ adjust to backend response
+            window.location.href = data.authorization_url;
+        } else {
+            message.textContent = "Payment initialization failed";
+            console.error(data);
+        }
+    } catch (err) {
+        message.textContent = "Error connecting to server";
+        console.error(err);
+    }
+});
+</script>
+
+</body>
+</html>
+

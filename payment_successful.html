@@ -9,33 +9,6 @@
 <h2>Payment Status</h2>
 <p id="statusMessage"></p>
 <script>
-// const queryParams = new URLSearchParams(window.location.search);
-// const reference = queryParams.get("reference");
-// const token = localStorage.getItem("token");
-// const VERIFY_URL = `https://backendlastproject.onrender.com/api/payments/paystack/verify/${reference}/`;
-
-// async function verifyPayment() {
-//     if (!token) {
-//         document.getElementById("statusMessage").textContent = "You must be logged in to verify payment";
-//         return;
-//     }
-
-//     try {
-//         const res = await fetch(VERIFY_URL, {
-//             headers: {
-//                 "Authorization": `Token ${token}`
-//             }
-//         });
-//         const data = await res.json();
-//         document.getElementById("statusMessage").textContent = `${data.status.toUpperCase()}: ${data.message}`;
-//     } catch (err) {
-//         document.getElementById("statusMessage").textContent = "Error verifying payment";
-//         console.error(err);
-//     }
-// }
-
-// verifyPayment();
-
 
 const queryParams = new URLSearchParams(window.location.search);
 const reference = queryParams.get("reference");
