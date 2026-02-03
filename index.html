@@ -143,6 +143,7 @@ let selectedListing = null;
 async function authFetch(url, options = {}) {
     const token = localStorage.getItem("access_token");
     options.headers = options.headers || {};
+    options.headers["Content-Type"] = "application/json";  // FIX ADDED
     if (token) options.headers["Authorization"] = `Bearer ${token}`;
     return fetch(url, options);
 }
