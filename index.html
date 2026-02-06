@@ -220,33 +220,14 @@ document.getElementById("buyNowBtn").addEventListener("click", async () => {
         body: JSON.stringify({ amount: selectedListing.price * 100 })
     });
 
-    // const data = await res.json();
+     const data = await res.json();
 
-    // if (data.status === true && data.data?.authorization_url) {
-    //     window.location.href = data.data.authorization_url;
-    // } else {
-    //     alert("Payment initiation failed ❌");
-    //     console.error(data);
-    // }
-
-
-const text = await res.text();
-console.log("RAW PAYMENT RESPONSE:", text);
-
-let data;
-try {
-    data = JSON.parse(text);
-} catch {
-    alert("Backend did not return JSON ❌");
-    return;
-}
-
-if (data.data && data.data.authorization_url) {
-    window.location.href = data.data.authorization_url;
-} else {
-    alert("Payment initiation failed ❌");
-}
-
+     if (data.status === true && data.data?.authorization_url) {
+         window.location.href = data.data.authorization_url;
+     } else {
+        alert("Payment initiation failed ❌");
+         console.error(data);
+     }
 
 
 
