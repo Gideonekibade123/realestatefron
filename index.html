@@ -17,55 +17,51 @@
 <body class="bg-light">
 <div class="container my-4">
 
-    <!-- HEADER -->
-    <div class="card mb-4">
-        <div class="card-body d-flex justify-content-between align-items-center">
-            <div>
-                <h4>Welcome, <span id="displayUsername">Guest</span> 👋</h4>
-                <small class="text-muted">Upload or Buy Listings</small>
-            </div>
-            <div>
-                <button id="loginBtn" class="btn btn-outline-success btn-sm">Login</button>
-                <button id="registerBtn" class="btn btn-outline-primary btn-sm">Register</button>
-                <button id="logoutBtn" class="btn btn-outline-danger btn-sm" style="display:none;">Logout</button>
-            </div>
+<div class="card mb-4">
+    <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+            <h4>Welcome, <span id="displayUsername">Guest</span> 👋</h4>
+            <small class="text-muted">Upload or Buy Listings</small>
+        </div>
+        <div>
+            <button id="loginBtn" class="btn btn-outline-success btn-sm">Login</button>
+            <button id="registerBtn" class="btn btn-outline-primary btn-sm">Register</button>
+            <button id="logoutBtn" class="btn btn-outline-danger btn-sm" style="display:none;">Logout</button>
         </div>
     </div>
-
-    <!-- UPLOAD FORM -->
-    <div class="card mb-4" id="uploadCard" style="display:none;">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Upload New Listing</h5>
-            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#uploadListingDropdown">Toggle</button>
-        </div>
-        <div id="uploadListingDropdown" class="collapse">
-            <div class="card-body">
-                <form id="uploadForm" enctype="multipart/form-data">
-                    <input type="text" name="title" class="form-control mb-2" placeholder="Property Title" required>
-                    <textarea name="description" class="form-control mb-2" placeholder="Description" required></textarea>
-                    <input type="text" name="location" class="form-control mb-2" placeholder="Location" required>
-                    <input type="number" name="price" class="form-control mb-2" placeholder="Price" required>
-                    <input type="text" name="phone" class="form-control mb-2" placeholder="Phone">
-                    <select name="category" class="form-control mb-2" required>
-                        <option value="">Select Category</option>
-                        <option value="sale">For Sale</option>
-                        <option value="rent">For Rent</option>
-                        <option value="buy">Buy</option>
-                        <option value="lease">Lease</option>
-                    </select>
-                    <input type="file" name="images" multiple class="form-control mb-2">
-                    <button class="btn btn-success w-100">Upload Listing</button>
-                    <p id="uploadResponse" class="mt-2"></p>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- LISTINGS CONTAINER -->
-    <div id="listingsContainer" class="row g-4"></div>
 </div>
 
-<!-- MODAL -->
+<div class="card mb-4" id="uploadCard" style="display:none;">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Upload New Listing</h5>
+        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#uploadListingDropdown">Toggle</button>
+    </div>
+    <div id="uploadListingDropdown" class="collapse">
+        <div class="card-body">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <input type="text" name="title" class="form-control mb-2" placeholder="Property Title" required>
+                <textarea name="description" class="form-control mb-2" placeholder="Description" required></textarea>
+                <input type="text" name="location" class="form-control mb-2" placeholder="Location" required>
+                <input type="number" name="price" class="form-control mb-2" placeholder="Price" required>
+                <input type="text" name="phone" class="form-control mb-2" placeholder="Phone">
+                <select name="category" class="form-control mb-2" required>
+                    <option value="">Select Category</option>
+                    <option value="sale">For Sale</option>
+                    <option value="rent">For Rent</option>
+                    <option value="buy">Buy</option>
+                    <option value="lease">Lease</option>
+                </select>
+                <input type="file" name="images" multiple class="form-control mb-2">
+                <button class="btn btn-success w-100">Upload Listing</button>
+                <p id="uploadResponse" class="mt-2"></p>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="listingsContainer" class="row g-4"></div>
+</div>
+
 <div class="modal fade" id="buyModal" tabindex="-1">
 <div class="modal-dialog modal-xl modal-dialog-centered">
 <div class="modal-content">
@@ -106,20 +102,19 @@ let currentUser = null;
 let currentEmail = null;
 let selectedListing = null;
 
-/* AUTH FETCH */
 async function authFetch(url, options = {}) {
     const token = localStorage.getItem("access_token");
     options.headers = options.headers || {};
-    if (!(options.body instanceof FormData)) options.headers["Content-Type"] = "application/json";
+    if (!(options.body instanceof FormData)) {
+        options.headers["Content-Type"] = "application/json";
+    }
     if (token) options.headers["Authorization"] = `Bearer ${token}`;
     return fetch(url, options);
 }
 
-/* LOAD PROFILE */
 async function loadProfile() {
     try {
         const res = await authFetch(`${API_BASE}/auth/profile/`);
-        if (!res.ok) throw "unauth";
         const data = await res.json();
         currentUser = data.username;
         currentEmail = data.email;
@@ -136,34 +131,29 @@ async function loadProfile() {
     loadListings();
 }
 
-/* LOAD LISTINGS */
 async function loadListings() {
-    try {
-        const res = await fetch(`${API_BASE}/listings/`);
-        const listings = await res.json();
-        const container = document.getElementById("listingsContainer");
-        container.innerHTML = "";
+    const res = await fetch(`${API_BASE}/listings/`);
+    const listings = await res.json();
+    const container = document.getElementById("listingsContainer");
+    container.innerHTML = "";
 
-        listings.forEach(l => {
-            const col = document.createElement("div");
-            col.className = "col-md-4";
-            col.innerHTML = `
-                <div class="card h-100">
-                    <img src="https://backendlastproject.onrender.com/${l.images?.[0]?.image || ''}" class="card-img-top">
-                    <div class="card-body">
-                        <h5>${l.title}</h5>
-                        <p>${l.location}</p>
-                        <strong>₦${l.price}</strong>
-                    </div>
+    listings.forEach(l => {
+        const col = document.createElement("div");
+        col.className = "col-md-4";
+        col.innerHTML = `
+            <div class="card h-100">
+                <img src="https://backendlastproject.onrender.com/${l.images?.[0]?.image || ""}" class="card-img-top">
+                <div class="card-body">
+                    <h5>${l.title}</h5>
+                    <p>${l.location}</p>
+                    <strong>₦${l.price}</strong>
                 </div>
-            `;
-            col.onclick = () => openModal(l);
-            container.appendChild(col);
-        });
-    } catch (err) { console.error("Failed to load listings:", err); }
+            </div>`;
+        col.onclick = () => openModal(l);
+        container.appendChild(col);
+    });
 }
 
-/* OPEN MODAL */
 function openModal(l) {
     selectedListing = l;
     document.getElementById("modalTitle").textContent = l.title;
@@ -182,85 +172,70 @@ function openModal(l) {
     new bootstrap.Modal(document.getElementById("buyModal")).show();
 }
 
-/* SEND ENQUIRY - FIXED */
+/* MESSAGE — FIXED */
 document.getElementById("listingMessageForm").addEventListener("submit", async e => {
     e.preventDefault();
-    const msgContent = document.getElementById("msgContent");
+    const msg = document.getElementById("msgContent");
+
     if (!currentUser) {
-        document.getElementById("listingMessageResponse").textContent = "Please login first ❌";
+        listingMessageResponse.textContent = "Please login first ❌";
         return;
     }
-    try {
-        const res = await authFetch(`${API_BASE}/enquiries/`, {
-            method: "POST",
-            body: JSON.stringify({
-                listing: selectedListing.id,
-                message: msgContent.value.trim(),
-                sender_name: currentUser,    // ⚡ Added
-                sender_email: currentEmail   // ⚡ Added
-            })
-        });
 
-        if (res.ok) {
-            document.getElementById("listingMessageResponse").textContent = "Message sent ✅";
-            msgContent.value = "";
-        } else {
-            const data = await res.json();
-            console.error("Enquiry failed:", data);
-            document.getElementById("listingMessageResponse").textContent = "Message failed ❌";
-        }
-    } catch (err) {
-        document.getElementById("listingMessageResponse").textContent = "Message failed ❌";
-        console.error(err);
+    const res = await authFetch(`${API_BASE}/enquiries/`, {
+        method: "POST",
+        body: JSON.stringify({
+            listing: selectedListing.id,
+            message: msg.value,
+            sender_name: currentUser,
+            sender_email: currentEmail
+        })
+    });
+
+    if (res.status === 200 || res.status === 201) {
+        listingMessageResponse.textContent = "Message sent ✅";
+        msg.value = "";
+    } else {
+        listingMessageResponse.textContent = "Message failed ❌";
     }
 });
 
 /* UPLOAD */
 document.getElementById("uploadForm").addEventListener("submit", async e => {
     e.preventDefault();
-    try {
-        const res = await authFetch(`${API_BASE}/listings/`, { method: "POST", body: new FormData(e.target) });
-        document.getElementById("uploadResponse").textContent = res.ok ? "Uploaded ✅" : "Upload failed ❌";
-        if (res.ok) { e.target.reset(); loadListings(); }
-    } catch (err) {
-        document.getElementById("uploadResponse").textContent = "Upload failed ❌";
-        console.error(err);
-    }
+    const res = await authFetch(`${API_BASE}/listings/`, {
+        method: "POST",
+        body: new FormData(e.target)
+    });
+    uploadResponse.textContent = res.ok ? "Uploaded ✅" : "Upload failed ❌";
+    if (res.ok) { e.target.reset(); loadListings(); }
 });
 
-/* BUY NOW PAYMENT - FIXED */
+/* PAYMENT — FIXED */
 document.getElementById("buyNowBtn").addEventListener("click", async () => {
-    if (!currentUser) { alert("Please login first!"); return; }
-    if (!selectedListing) { alert("No listing selected!"); return; }
-    try {
-        const res = await authFetch(`${API_BASE}/payments/paystack/init/`, {
-            method: "POST",
-            body: JSON.stringify({ amount: selectedListing.price * 100 }) // ⚡ Paystack expects kobo
-        });
+    if (!currentUser || !selectedListing) return alert("Login first!");
 
-        let data;
-        try { data = await res.json(); }
-        catch { console.error(await res.text()); alert("Payment server error ❌"); return; }
+    const res = await authFetch(`${API_BASE}/payments/paystack/init/`, {
+        method: "POST",
+        body: JSON.stringify({ amount: selectedListing.price * 100 })
+    });
 
-        if (data.authorization_url) {
-            window.location.href = data.authorization_url;
-        } else {
-            alert("Payment initiation failed ❌");
-            console.error(data);
-        }
-    } catch (err) {
+    const data = await res.json();
+
+    if (data.status === true && data.data?.authorization_url) {
+        window.location.href = data.data.authorization_url;
+    } else {
         alert("Payment initiation failed ❌");
-        console.error(err);
+        console.error(data);
     }
 });
 
-/* BUTTONS */
-document.getElementById("loginBtn").onclick = () => location.href = "login.html";
-document.getElementById("registerBtn").onclick = () => location.href = "register.html";
-document.getElementById("logoutBtn").onclick = () => { localStorage.clear(); location.href = "login.html"; };
+loginBtn.onclick = () => location.href = "login.html";
+registerBtn.onclick = () => location.href = "register.html";
+logoutBtn.onclick = () => { localStorage.clear(); location.href = "login.html"; };
 
-/* INITIALIZE */
 loadProfile();
 </script>
 </body>
 </html>
+
